@@ -43,8 +43,10 @@ async function bootstrap() {
   const splash = splashScreen();
   app.appendChild(splash);
 
-  // Critical init must not be blocked by a flaky service worker.
-  await Promise.all([Store.init(), new Promise((r) => setTimeout(r, 2100))]);
+  // Critical init must not be blocked by a flaky service worker. The splash
+  // is held ~2.6s so the "Developed by…" credit (fades in at 1.3s) stays
+  // fully visible for about half a second before the app appears.
+  await Promise.all([Store.init(), new Promise((r) => setTimeout(r, 2600))]);
   registerServiceWorker();
 
   // Resolve the real UI locale from the saved settings and active course.

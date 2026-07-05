@@ -49,14 +49,19 @@ button {
 
 /* App container: a phone-width column on large screens, full-bleed on
    phones. The gradient lives on each screen so slide transitions look
-   like opaque cards sliding over one another. */
+   like opaque cards sliding over one another.
+
+   position:fixed + inset:0 pins it to exactly the visible viewport on every
+   browser — unlike 100vh/100dvh, which some mobile browsers (and installed
+   PWAs) report taller than the usable area, pushing the bottom bar off
+   screen. Combined with the safe-area padding on .appbar/.scaffold-bottom,
+   the top and bottom action bars are always fully visible. */
 #app {
-  position: relative;
+  position: fixed;
+  inset: 0;
   width: 100%;
   max-width: 560px;
   margin: 0 auto;
-  height: 100vh;
-  height: 100dvh;
   overflow: hidden;
   box-shadow: 0 0 60px rgba(0, 0, 0, 0.5);
 }
