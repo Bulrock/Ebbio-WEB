@@ -138,10 +138,15 @@ register('addCard', (nav) => {
     fieldRow(t('wordField', { lang: course.targetLang }), wordInput, true),
     fieldRow(t('definitionField', { lang: course.targetLang }), defInput),
     fieldRow(t('translationField', { lang: course.nativeLang }), transInput),
-    saveBtn,
   ]);
 
-  const el = h('div', { class: 'screen' }, scaffold({ nav, title: t('newWord'), body }));
+  // Save stays pinned to the bottom (like the mobile app), never scrolling
+  // away with the form fields.
+  const el = h(
+    'div',
+    { class: 'screen' },
+    scaffold({ nav, title: t('newWord'), body, bottom: saveBtn }),
+  );
   requestAnimationFrame(() => wordInput.focus());
   return el;
 });
