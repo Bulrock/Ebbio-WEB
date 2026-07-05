@@ -1,0 +1,32 @@
+{
+  "name": "Ebbio",
+  "short_name": "Ebbio",
+  "description": "Learn words with spaced repetition, powered by the Ebbinghaus forgetting curve.",
+  "lang": "en",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f3b38",
+  "theme_color": "#065F46",
+  "icons": [
+    {
+      "src": "assets/icon/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
