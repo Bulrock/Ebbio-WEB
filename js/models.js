@@ -13,6 +13,13 @@ export function defaultIntervalsMinutes() {
   return [180, 4320, 30240, 129600];
 }
 
+/// Canonical form used for duplicate checks and search: trimmed,
+/// inner whitespace collapsed, lowercased. Stored on every card and
+/// indexed in IndexedDB.
+export function normalizeTerm(word) {
+  return word.trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
 /// A flashcard for a single word being learned.
 export function makeCard({
   word,
@@ -27,6 +34,7 @@ export function makeCard({
   const now = Date.now();
   return {
     word,
+    normalizedTerm: normalizeTerm(word),
     definition,
     translation,
     status,

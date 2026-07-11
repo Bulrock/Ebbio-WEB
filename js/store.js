@@ -9,6 +9,7 @@ import {
   defaultIntervalsMinutes,
   courseStepCount,
   isDue,
+  normalizeTerm,
 } from './models.js';
 
 const _cards = new Map(); // key(int) -> card
@@ -19,6 +20,11 @@ const _listeners = new Set();
 export const Store = {
   async init() {
     await openDb();
+    // Ask the browser not to evict our data under storage pressure.
+    // Best-effort: some browsers prompt, some decide silently.
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persist().catch(() => {});
+    }
     for (const c of await getAll('cards')) _cards.set(c.key, c);
     for (const c of await getAll('courses')) _courses.set(c.targetLang, c);
     const settingsRows = await getAll('settings');
@@ -50,6 +56,11 @@ export const Store = {
     for (const card of _cards.values()) {
       if (!card.courseLang) {
         card.courseLang = _settings.activeCourseLang;
+        await put('cards', card);
+      }
+      // v2: cards written before the normalizedTerm index existed.
+      if (!card.normalizedTerm) {
+        card.normalizedTerm = normalizeTerm(card.word);
         await put('cards', card);
       }
     }
@@ -107,6 +118,25 @@ export const Store = {
       .sort((a, b) => a.nextReviewTime - b.nextReviewTime);
   },
 
+  /// True when the course already has this word (normalized match).
+  hasWord(word, targetLang) {
+    const term = normalizeTerm(word);
+    const lang = targetLang || this.activeCourse.targetLang;
+    return this.courseCards(lang).some((c) => c.normalizedTerm === term);
+  },
+
+  /// {usageBytes, quotaBytes} from the browser, or null when the
+  /// StorageManager API is unavailable.
+  async storageEstimate() {
+    if (!navigator.storage || !navigator.storage.estimate) return null;
+    try {
+      const { usage, quota } = await navigator.storage.estimate();
+      return { usageBytes: usage || 0, quotaBytes: quota || 0 };
+    } catch {
+      return null;
+    }
+  },
+
   // ---- writes --------------------------------------------------------
   async setActiveCourse(targetLang) {
     _settings.activeCourseLang = targetLang;
@@ -161,6 +191,7 @@ export const Store = {
 
   /// Adds a new card, assigning the IndexedDB-generated integer key.
   async addCard(card) {
+    card.normalizedTerm = normalizeTerm(card.word);
     const key = await add('cards', card);
     card.key = key;
     // Persist again so the record carries its own key field too.
@@ -171,6 +202,7 @@ export const Store = {
   },
 
   async saveCard(card) {
+    card.normalizedTerm = normalizeTerm(card.word);
     await put('cards', card);
     _cards.set(card.key, card);
     this._notify();

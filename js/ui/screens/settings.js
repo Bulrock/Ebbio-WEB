@@ -244,6 +244,28 @@ register('settings', (nav, props) => {
     });
     children.push(h('label', { class: 'field' }, [uiSel]));
 
+    // ---- data: storage usage stats -------------------------------------
+    children.push(h('hr', { class: 'divider' }));
+    children.push(h('div', { class: 'settings-title' }, t('dataSection')));
+    const statsLine = h('div', { class: 'settings-subtitle' }, '…');
+    function renderStats(size) {
+      statsLine.textContent = t('storageStats', {
+        cards: compactCount(Store.allCards.length),
+        courses: compactCount(Store.courses.length),
+        size,
+      });
+    }
+    renderStats('…');
+    Store.storageEstimate().then((estimate) => {
+      if (!estimate) {
+        renderStats('—');
+        return;
+      }
+      const kb = estimate.usageBytes / 1024;
+      renderStats(kb < 1024 ? `${kb.toFixed(1)} KB` : `${(kb / 1024).toFixed(1)} MB`);
+    });
+    children.push(statsLine);
+
     return scaffold({
       nav: nav_,
       title: t('settings'),

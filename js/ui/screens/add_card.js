@@ -43,13 +43,10 @@ register('addCard', (nav) => {
     onClick: () => save(),
   });
 
-  function isDuplicate(word) {
-    const lower = word.toLowerCase();
-    return Store.courseCards().some((c) => c.word.trim().toLowerCase() === lower);
-  }
-
   function warnIfDuplicate(word) {
-    if (!isDuplicate(word)) return false;
+    // Normalized match (trim, collapse spaces, lowercase) against the
+    // course, backed by the store's normalizedTerm field.
+    if (!Store.hasWord(word, course.targetLang)) return false;
     snackbar(t('wordAlreadyAdded', { word }));
     return true;
   }
@@ -92,7 +89,9 @@ register('addCard', (nav) => {
   }
 
   async function save() {
-    const word = wordInput.value.trim();
+    // Collapse inner whitespace; the case is kept as typed — proper
+    // nouns are legitimate vocabulary.
+    const word = wordInput.value.trim().replace(/\s+/g, ' ');
     if (word === '') {
       snackbar(t('enterWord'));
       return;

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<body>
+<pre id="out">running…</pre>
+<script>
+window.onerror = (m, s, l) => { document.getElementById('out').textContent = 'ONERROR ' + m + ' ' + s + ':' + l; console.log('ONERROR', m, s, l); };
+window.addEventListener('unhandledrejection', (e) => { document.getElementById('out').textContent = 'REJECTION ' + (e.reason && e.reason.message); console.log('REJECTION', e.reason); });
+</script>
+<script type="module">
+// IndexedDB layer test page. Run with tests/run.py (headless Chrome CDP).
+import { openDb, get, getAll, getAllFromIndex, add, put, del } from '../js/db.js';
+import { Store } from '../js/store.js';
+import { makeCard, normalizeTerm } from '../js/models.js';
+
+const out = [];
+const check = (name, cond) => out.push(`${cond ? 'PASS' : 'FAIL'} ${name}`);
+
+try {
+  // Simulate a v1 database first: cards without normalizedTerm.
+  await new Promise((resolve, reject) => {
+    const req = indexedDB.deleteDatabase('ebbio');
+    req.onsuccess = resolve;
+    req.onerror = () => reject(req.error);
+    req.onblocked = resolve;
+  });
+
+  // Operations auto-open the DB — no explicit openDb() call here.
+  const key = await add('cards', {
+    word: 'Stary  Kot',
+    courseLang: 'en',
+    nextReviewTime: 5,
+    isLearned: false,
+  });
+  check('add returns a generated key', Number.isInteger(key));
+
+  const db = await openDb();
+  const names = db.transaction('cards').objectStore('cards').indexNames;
+  check('courseLang index', names.contains('courseLang'));
+  check('normalizedTerm index', names.contains('normalizedTerm'));
+  check('nextReviewTime index', names.contains('nextReviewTime'));
+
+  const fetched = await get('cards', key);
+  check('get(store, key)', fetched && fetched.word === 'Stary  Kot');
+
+  // Store.init backfills normalizedTerm on legacy records.
+  await Store.init();
+  const backfilled = await get('cards', key);
+  check(
+    'normalizedTerm backfilled by migration',
+    backfilled.normalizedTerm === 'stary kot',
+  );
+  check('normalizeTerm collapses spaces', normalizeTerm(' A  b ') === 'a b');
+
+  check('hasWord matches normalized', Store.hasWord('  stary   kot ', 'en'));
+  check('hasWord misses other words', !Store.hasWord('pies', 'en'));
+
+  const byIndex = await getAllFromIndex('cards', 'normalizedTerm', 'stary kot');
+  check('getAllFromIndex finds the card', byIndex.length === 1);
+
+  const viaCourse = await getAllFromIndex('cards', 'courseLang', 'en');
+  check('courseLang index queries', viaCourse.length >= 1);
+
+  const added = await Store.addCard(
+    makeCard({ word: 'Pies', courseLang: 'en', nextReviewTime: 1 }),
+  );
+  check('addCard stores normalizedTerm', added.normalizedTerm === 'pies');
+
+  const estimate = await Store.storageEstimate();
+  check('storageEstimate returns usage', estimate && estimate.usageBytes >= 0);
+
+  await put('cards', { ...added, word: 'Piesek' });
+  await Store.deleteCard(added);
+  check('delete works', (await get('cards', added.key)) === undefined);
+
+  out.push(out.some((l) => l.startsWith('FAIL')) ? 'RESULT: FAIL' : 'RESULT: ALL PASS');
+} catch (e) {
+  out.push('RESULT: ERROR ' + (e && e.message));
+}
+document.getElementById('out').textContent = out.join('\n');
+console.log(out.join('\n'));
+document.title = 'done';
+</script>
+</body>
+</html>
