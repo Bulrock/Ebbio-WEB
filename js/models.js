@@ -30,6 +30,7 @@ export function makeCard({
   isLearned = false,
   createdAt = null,
   courseLang = '',
+  sourceUrl = '',
 }) {
   const now = Date.now();
   return {
@@ -42,6 +43,9 @@ export function makeCard({
     isLearned,
     createdAt: createdAt == null ? now : createdAt,
     courseLang,
+    // Link to the Wiktionary article the definition came from; empty
+    // when the card was filled in manually.
+    sourceUrl,
   };
 }
 

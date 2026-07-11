@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body>
+<pre id="out">running…</pre>
+<script>
+window.onerror = (m, s, l) => { document.getElementById('out').textContent = 'ONERROR ' + m + ' ' + s + ':' + l; };
+window.addEventListener('unhandledrejection', (e) => { document.getElementById('out').textContent = 'REJECTION ' + (e.reason && e.reason.message); });
+</script>
+<script type="module">
+// Pure-logic test page. Run with tests/run.py (headless Chrome CDP).
+import {
+  parseResult,
+  extractLanguageSection,
+  cleanExtract,
+  articleUrl,
+} from '../js/services/dictionary.js';
+import { encodeBackup, decodeBackup } from '../js/logic/backup_codec.js';
+import { normalizeTerm, makeCard, makeCourse, makeSettings, ResetMode } from '../js/models.js';
+
+const out = [];
+const check = (name, cond) => out.push(`${cond ? 'PASS' : 'FAIL'} ${name}`);
+const body = (pages) => JSON.stringify({ query: { pages } });
+
+try {
+  // ---- dictionary: typed results, metadata, redirects ----
+  let r = parseResult(
+    body([{ pageid: 12345, title: 'once in a blue moon',
+            extract: '== English ==\n\nvery rarely.' }]),
+    'en',
+  );
+  check('success carries title/pageId/url', r.status === 'success'
+    && r.entry.title === 'once in a blue moon' && r.entry.pageId === 12345
+    && r.entry.sourceUrl === 'https://en.wiktionary.org/wiki/once_in_a_blue_moon');
+  check('definition cleaned of headings', !r.entry.definition.includes('=='));
+  check('rawExtract keeps headings', r.entry.rawExtract.includes('== English =='));
+
+  r = parseResult(body([{ title: 'x', missing: true }]), 'en');
+  check('missing page is notFound', r.status === 'notFound');
+  check('bad JSON is invalidResponse', parseResult('{oops', 'en').status === 'invalidResponse');
+  check('fv1 object shape rejected',
+    parseResult(JSON.stringify({ query: { pages: { 1: {} } } }), 'en').status === 'invalidResponse');
+
+  // ---- language-section filter ----
+  const dArticle = '== Translingual ==\na Cyrillic letter\n== Russian ==\nthe letter de';
+  check('д-case: no course-language section -> null',
+    extractLanguageSection(dArticle, 'en') === null);
+  check('д-case: parseResult says notFound',
+    parseResult(body([{ pageid: 9, title: 'д', extract: dArticle }]), 'en').status === 'notFound');
+  check('Old English does not pass for English',
+    extractLanguageSection('== Old English ==\nold word', 'en') === null);
+  const plArticle = '== ryba (język polski) ==\nzool. ryba\n== ryba (język czeski) ==\nczeskie';
+  check('pl parenthesized style', (() => {
+    const s = extractLanguageSection(plArticle, 'pl');
+    return s.includes('zool. ryba') && !s.includes('czeskie');
+  })());
+  const ruArticle = '= Русский =\n== рыба I ==\nводное животное\n= Английский =\nenglish part';
+  check('ru level-1 style', (() => {
+    const s = extractLanguageSection(ruArticle, 'ru');
+    return s.includes('водное животное') && !s.includes('english part');
+  })());
+  check('no headings kept as is', extractLanguageSection('just text', 'en') === 'just text');
+
+  // ---- translations trim, no truncation ----
+  const longTail = Array.from({ length: 300 }, (_, i) => `line ${i}`).join('\n');
+  check('never truncates', cleanExtract(longTail).endsWith('line 299'));
+  const trimmed = cleanExtract('znaczenia:\n(1.1) ryba\ntłumaczenia:\nangielski: fish\nuwagi:\nnote');
+  check('translation section dropped, tail kept',
+    trimmed.includes('(1.1) ryba') && !trimmed.includes('fish') && trimmed.includes('note'));
+
+  check('unicode article url', articleUrl('pl', 'żółć') === encodeURI('https://pl.wiktionary.org/wiki/żółć'));
+
+  // ---- backup codec round-trip ----
+  const json = encodeBackup({
+    courses: [makeCourse({ targetLang: 'pl', nativeLang: 'en', intervalsInMinutes: [60, 1440], resetMode: ResetMode.toPrevious })],
+    cards: [makeCard({ word: 'ryba', definition: 'a fish', translation: 'fish', status: 2,
+                       nextReviewTime: Date.UTC(2026, 6, 11), courseLang: 'pl',
+                       sourceUrl: 'https://pl.wiktionary.org/wiki/ryba' })],
+    settings: makeSettings({ uiLang: 'ru', activeCourseLang: 'pl' }),
+    nowMs: Date.UTC(2026, 6, 11, 12),
+  });
+  const backup = decodeBackup(json);
+  check('backup round-trips course', backup.courses.length === 1
+    && backup.courses[0].resetMode === ResetMode.toPrevious
+    && backup.courses[0].intervalsInMinutes.join() === '60,1440');
+  check('backup round-trips card', backup.cards.length === 1
+    && backup.cards[0].word === 'ryba' && backup.cards[0].status === 2
+    && backup.cards[0].nextReviewTime === Date.UTC(2026, 6, 11)
+    && backup.cards[0].sourceUrl === 'https://pl.wiktionary.org/wiki/ryba');
+  check('backup keeps settings', backup.uiLang === 'ru' && backup.activeCourseLang === 'pl');
+  check('foreign payload rejected', (() => {
+    try { decodeBackup('{"foo": 1}'); return false; } catch { return true; }
+  })());
+  check('newer version rejected', (() => {
+    try { decodeBackup('{"app": "ebbio", "version": 99}'); return false; } catch { return true; }
+  })());
+  const repaired = decodeBackup(JSON.stringify({
+    app: 'ebbio', version: 1,
+    courses: [{ targetLang: 'de', intervalsInMinutes: [] }],
+    cards: [{ word: '   ' }, { word: 'Haus' }],
+  }));
+  check('empty intervals repaired, blank cards skipped',
+    repaired.courses[0].intervalsInMinutes.length > 0 && repaired.cards.length === 1);
+
+  check('normalizeTerm collapses and lowercases', normalizeTerm('  Stary   Kot ') === 'stary kot');
+
+  out.push(out.some((l) => l.startsWith('FAIL')) ? 'RESULT: FAIL' : 'RESULT: ALL PASS');
+} catch (e) {
+  out.push('RESULT: ERROR ' + (e && e.message));
+}
+document.getElementById('out').textContent = out.join('\n');
+document.title = 'done';
+</script>
+</body>
+</html>

@@ -7,6 +7,7 @@ import { t, setLocale, currentLocale, resolveUiLocale } from '../../i18n.js';
 import { ResetMode } from '../../models.js';
 import { Notifications } from '../../services/notifications.js';
 import { humanDuration } from '../../util/format.js';
+import { encodeBackup, decodeBackup } from '../../logic/backup_codec.js';
 import { compactCount } from '../../util/format.js';
 import { courseLanguages, uiLanguageNames, languageName, courseLabel } from '../../util/languages.js';
 
@@ -265,6 +266,58 @@ register('settings', (nav, props) => {
       renderStats(kb < 1024 ? `${kb.toFixed(1)} KB` : `${(kb / 1024).toFixed(1)} MB`);
     });
     children.push(statsLine);
+
+    // Export downloads a JSON file; import reads one and merges it.
+    const importInput = h('input', {
+      type: 'file',
+      accept: 'application/json,.json',
+      style: 'display:none',
+    });
+    importInput.addEventListener('change', async () => {
+      const file = importInput.files && importInput.files[0];
+      importInput.value = '';
+      if (!file) return;
+      try {
+        const backup = decodeBackup(await file.text());
+        const imported = await Store.importBackup(backup);
+        snackbar(t('importedCards', { count: imported }));
+        rerender();
+      } catch {
+        snackbar(t('importFailed'));
+      }
+    });
+    children.push(importInput);
+    children.push(
+      h('div', { class: 'data-actions' }, [
+        button({
+          label: t('exportData'),
+          iconName: 'external',
+          variant: 'outlined',
+          onClick: () => {
+            const json = encodeBackup({
+              courses: Store.courses,
+              cards: Store.allCards,
+              settings: Store.settings,
+              nowMs: Date.now(),
+            });
+            const stamp = new Date().toISOString().slice(0, 10);
+            const blob = new Blob([json], { type: 'application/json' });
+            const a = h('a', {
+              href: URL.createObjectURL(blob),
+              download: `ebbio-backup-${stamp}.json`,
+            });
+            a.click();
+            URL.revokeObjectURL(a.href);
+          },
+        }),
+        button({
+          label: t('importData'),
+          iconName: 'save',
+          variant: 'outlined',
+          onClick: () => importInput.click(),
+        }),
+      ]),
+    );
 
     return scaffold({
       nav: nav_,

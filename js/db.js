@@ -13,9 +13,11 @@
 //
 // v2 adds indexes on cards: courseLang, normalizedTerm (fast duplicate
 // checks and search), nextReviewTime (due queries).
+// v3 adds the wiktionaryCache store — dictionary lookups live apart
+// from user cards, so refreshing the cache never touches user data.
 
 const DB_NAME = 'ebbio';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 const CARD_INDEXES = ['courseLang', 'normalizedTerm', 'nextReviewTime'];
 
@@ -38,6 +40,9 @@ export function openDb() {
       }
       if (!db.objectStoreNames.contains('settings')) {
         db.createObjectStore('settings', { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains('wiktionaryCache')) {
+        db.createObjectStore('wiktionaryCache', { keyPath: 'cacheKey' });
       }
     };
     req.onsuccess = () => {

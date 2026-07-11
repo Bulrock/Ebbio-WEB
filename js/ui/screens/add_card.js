@@ -16,6 +16,9 @@ register('addCard', (nav) => {
   let lastAutofilledWord = '';
   let autoDefinition = null;
   let autoTranslation = null;
+  // Wiktionary article link for the last successful lookup; saved on
+  // the card so the full article stays one tap away.
+  let sourceUrl = '';
 
   const wordInput = h('input', {
     class: 'field-input',
@@ -23,7 +26,7 @@ register('addCard', (nav) => {
     autofocus: true,
     autocomplete: 'off',
   });
-  const defInput = h('textarea', { class: 'field-input', rows: '5' });
+  const defInput = h('textarea', { class: 'field-input def-input' });
   const transInput = h('input', { class: 'field-input', type: 'text', autocomplete: 'off' });
 
   const spinner = h('span', { class: 'field-spinner' });
@@ -77,7 +80,7 @@ register('addCard', (nav) => {
     try {
       result = await autofill(word, course.targetLang, course.nativeLang);
     } catch {
-      result = { definition: null, translation: null };
+      result = { definition: null, translation: null, sourceUrl: null, lookupFailed: true };
     }
     if (wordInput.value.trim() !== word) {
       setLoading(false);
@@ -86,6 +89,13 @@ register('addCard', (nav) => {
     setLoading(false);
     autoDefinition = applyAutofill(defInput, result.definition, autoDefinition);
     autoTranslation = applyAutofill(transInput, result.translation, autoTranslation);
+    sourceUrl = result.sourceUrl || '';
+    // Silence would read as "still searching" — say the lookup came
+    // back empty. A network problem is worded differently from a
+    // missing article.
+    if (result.definition == null) {
+      snackbar(result.lookupFailed ? t('lookupFailed') : t('definitionNotFound', { word }));
+    }
   }
 
   async function save() {
@@ -104,6 +114,9 @@ register('addCard', (nav) => {
       translation: transInput.value.trim(),
       nextReviewTime: Date.now() + course.intervalsInMinutes[0] * 60000,
       courseLang: course.targetLang,
+      // Keep the link only when the definition actually came from
+      // the article (the user may have replaced it — still useful).
+      sourceUrl: defInput.value.trim() === '' ? '' : sourceUrl,
     });
     await Store.addCard(card);
     await Notifications.requestPermission();
@@ -133,9 +146,13 @@ register('addCard', (nav) => {
     ]);
   }
 
-  const body = h('div', { class: 'form' }, [
+  // The definition is the largest content — its row (and the textarea
+  // inside) stretches to take all the height the screen has to offer.
+  const defRow = fieldRow(t('definitionField', { lang: course.targetLang }), defInput);
+  defRow.classList.add('field-grow');
+  const body = h('div', { class: 'form form-fill' }, [
     fieldRow(t('wordField', { lang: course.targetLang }), wordInput, true),
-    fieldRow(t('definitionField', { lang: course.targetLang }), defInput),
+    defRow,
     fieldRow(t('translationField', { lang: course.nativeLang }), transInput),
   ]);
 

@@ -11,7 +11,8 @@ export async function translate(text, sourceLang, targetLang) {
     langpair: `${sourceLang}|${targetLang}`,
   });
   const url = `https://api.mymemory.translated.net/get?${params}`;
-  const response = await fetch(url);
+  // A hung request must not block the add-word flow indefinitely.
+  const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
   if (!response.ok) return null;
   return parseTranslation(await response.text());
 }

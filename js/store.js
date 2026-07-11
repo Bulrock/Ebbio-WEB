@@ -2,6 +2,7 @@
 // the mobile app: synchronous reads over a cached copy, async writes
 // that persist and then notify listeners so the UI re-renders.
 import { openDb, getAll, add, put, del } from './db.js';
+import { cachePrune } from './services/wiktionary_cache.js';
 import {
   ResetMode,
   makeCourse,
@@ -34,6 +35,8 @@ export const Store = {
       await put('settings', _settings);
     }
     await this._migrate();
+    // Evict Wiktionary cache entries unused for a long time.
+    cachePrune(Date.now()).catch(() => {});
   },
 
   // Fresh installs get a default course; orphan cards are adopted, and
@@ -212,6 +215,38 @@ export const Store = {
     _cards.delete(card.key);
     await del('cards', card.key);
     if (!silent) this._notify();
+  },
+
+  /// Merges a decoded backup into the local data: missing courses are
+  /// created, cards are added unless the same normalized word already
+  /// exists in that course. Existing data is never overwritten.
+  /// Returns the number of imported cards.
+  async importBackup(backup) {
+    for (const course of backup.courses) {
+      if (!_courses.has(course.targetLang)) {
+        _courses.set(course.targetLang, course);
+        await put('courses', course);
+      }
+    }
+
+    const existing = new Set(
+      [..._cards.values()].map((c) => `${c.courseLang}|${c.normalizedTerm || normalizeTerm(c.word)}`),
+    );
+    let imported = 0;
+    for (const card of backup.cards) {
+      // A card of an unknown course would be invisible — attach it to
+      // the active course instead of dropping it.
+      if (!_courses.has(card.courseLang)) {
+        card.courseLang = this.activeCourse.targetLang;
+      }
+      const key = `${card.courseLang}|${card.normalizedTerm}`;
+      if (card.normalizedTerm === '' || existing.has(key)) continue;
+      existing.add(key);
+      await this.addCard(card);
+      imported++;
+    }
+    if (imported > 0) this._notify();
+    return imported;
   },
 
   // Convenience re-exports so screens import one module.

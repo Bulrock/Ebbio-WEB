@@ -501,6 +501,19 @@ textarea.field-input {
   resize: vertical;
   min-height: 96px;
 }
+/* The add-word form fills the scaffold body so the definition field
+   can take all the height the screen has to offer. */
+.form-fill {
+  min-height: 100%;
+}
+.field-grow {
+  flex: 1 1 auto;
+}
+.field-grow .def-input {
+  flex: 1 1 auto;
+  min-height: 120px;
+  resize: none;
+}
 .field-helper {
   font-size: 0.8rem;
   color: var(--white-70);
@@ -877,10 +890,22 @@ details[open] > summary .expand-caret {
 .word-empty {
   color: var(--white-70);
 }
-.word-delete-row {
+.word-actions-row {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   margin-top: 8px;
+}
+.dict-search {
+  margin-bottom: 12px;
+}
+.data-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+.data-actions > * {
+  flex: 1;
 }
 
 /* ---- definition rendering ---- */

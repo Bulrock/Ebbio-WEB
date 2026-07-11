@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+<head><meta charset="utf-8"></head>
 <body>
 <pre id="out">running…</pre>
 <script>
@@ -11,6 +12,15 @@ window.addEventListener('unhandledrejection', (e) => { document.getElementById('
 import { openDb, get, getAll, getAllFromIndex, add, put, del } from '../js/db.js';
 import { Store } from '../js/store.js';
 import { makeCard, normalizeTerm } from '../js/models.js';
+import {
+  cacheLookup,
+  cacheStore,
+  isFresh,
+  toEntry,
+  cachePrune,
+  KEEP_FOR_MS,
+} from '../js/services/wiktionary_cache.js';
+import { get as dbGet, put as dbPut } from '../js/db.js';
 
 const out = [];
 const check = (name, cond) => out.push(`${cond ? 'PASS' : 'FAIL'} ${name}`);
@@ -71,6 +81,27 @@ try {
   await put('cards', { ...added, word: 'Piesek' });
   await Store.deleteCard(added);
   check('delete works', (await get('cards', added.key)) === undefined);
+
+  // ---- wiktionaryCache store (schema v3) ----
+  const now = Date.now();
+  await cacheStore('Kot', 'PL', {
+    title: 'kot', pageId: 7,
+    sourceUrl: 'https://pl.wiktionary.org/wiki/kot',
+    rawExtract: '== kot (język polski) ==\nzool. kot\ntłumaczenia:\nangielski: cat',
+  }, now);
+  const hit = await cacheLookup(' kot ', 'pl', now + 1000);
+  check('cache lookup is key-normalized', !!hit && hit.title === 'kot');
+  check('cache hit bumps lastUsedAt', hit.lastUsedAt === now + 1000);
+  check('cache freshness window', isFresh(hit, now + 1000) && !isFresh(hit, now + 8 * 24 * 3600 * 1000));
+  const entry = toEntry(hit);
+  check('cache re-cleans raw with current parser',
+    entry.definition.includes('zool. kot') && !entry.definition.includes('angielski'));
+
+  hit.lastUsedAt = now - KEEP_FOR_MS - 1000;
+  await dbPut('wiktionaryCache', hit);
+  await cachePrune(now);
+  check('cache prune evicts old entries',
+    (await dbGet('wiktionaryCache', hit.cacheKey)) === undefined);
 
   out.push(out.some((l) => l.startsWith('FAIL')) ? 'RESULT: FAIL' : 'RESULT: ALL PASS');
 } catch (e) {
