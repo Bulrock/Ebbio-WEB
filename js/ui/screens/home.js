@@ -62,8 +62,8 @@ function build(nav) {
   children.push(
     h('div', { class: 'row-2' }, [
       button({
-        label: t('modes'),
-        iconName: 'dumbbell',
+        label: t('practice'),
+        iconName: 'cards',
         variant: 'outlined',
         disabled: all.length === 0,
         onClick: () => nav.push('modes', {}),
@@ -99,6 +99,7 @@ function build(nav) {
   }
 
   return scaffold({
+    back: false,
     nav,
     title: t('appTitle'),
     actions: [

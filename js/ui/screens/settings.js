@@ -256,15 +256,19 @@ register('settings', (nav, props) => {
         size,
       });
     }
-    renderStats('…');
-    Store.storageEstimate().then((estimate) => {
-      if (!estimate) {
-        renderStats('—');
-        return;
-      }
-      const kb = estimate.usageBytes / 1024;
-      renderStats(kb < 1024 ? `${kb.toFixed(1)} KB` : `${(kb / 1024).toFixed(1)} MB`);
-    });
+    // The size of the backup JSON — the number the user actually gets
+    // when exporting (a whole-origin storage estimate includes service
+    // worker caches and reads an order of magnitude too big).
+    const backupBytes = new Blob([
+      encodeBackup({
+        courses: Store.courses,
+        cards: Store.allCards,
+        settings: Store.settings,
+        nowMs: Date.now(),
+      }),
+    ]).size;
+    const kb = backupBytes / 1024;
+    renderStats(kb < 1024 ? `${kb.toFixed(1)} KB` : `${(kb / 1024).toFixed(1)} MB`);
     children.push(statsLine);
 
     // Export downloads a JSON file; import reads one and merges it.

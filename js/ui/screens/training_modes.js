@@ -120,7 +120,7 @@ function build(nav) {
     }),
   ]);
 
-  return scaffold({ nav, title: t('training'), body });
+  return scaffold({ nav, title: t('practice'), body });
 }
 
 register('modes', (nav, props) =>
