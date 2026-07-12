@@ -49,8 +49,9 @@ const PATHS = {
   party:
     '<line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="5" y1="5" x2="7" y2="7"/><line x1="17" y1="17" x2="19" y2="19"/><line x1="19" y1="5" x2="17" y2="7"/><line x1="7" y1="17" x2="5" y2="19"/><circle cx="12" cy="12" r="2.5"/>',
   check: '<polyline points="20 6 9 17 4 12"/>',
+  // Two fanned flashcards, like the mobile app's Icons.style.
   cards:
-    '<rect x="7" y="3" width="14" height="14" rx="2"/><path d="M17 21H5a2 2 0 01-2-2V7"/>',
+    '<rect x="3" y="5.5" width="11" height="15" rx="2" transform="rotate(-14 8.5 13)"/><rect x="10" y="3.5" width="11" height="15" rx="2" transform="rotate(8 15.5 11)"/>',
   globe:
     '<circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>',
   radioOn: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/>',
