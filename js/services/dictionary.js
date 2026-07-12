@@ -43,8 +43,14 @@ export async function fetchDefinition(word, targetLang) {
   let response;
   try {
     // A hung request must not block the add-word flow indefinitely.
+    // Browsers refuse to override User-Agent, but Wikimedia accepts
+    // the Api-User-Agent header for API-policy identification —
+    // generic clients are the first to be rate-limited.
     response = await fetch(url, {
-      headers: { Accept: 'application/json' },
+      headers: {
+        Accept: 'application/json',
+        'Api-User-Agent': 'Ebbio/1.0 (spaced-repetition flashcards app)',
+      },
       signal: AbortSignal.timeout(8000),
     });
   } catch (e) {

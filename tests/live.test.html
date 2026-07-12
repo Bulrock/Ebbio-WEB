@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body>
+<pre id="out">running…</pre>
+<script>
+window.onerror = (m, s, l) => { document.getElementById('out').textContent = 'ONERROR ' + m + ' ' + s + ':' + l; };
+window.addEventListener('unhandledrejection', (e) => { document.getElementById('out').textContent = 'REJECTION ' + (e.reason && e.reason.message); });
+</script>
+<script type="module">
+// LIVE test page: hits the real Wiktionary once per supported edition
+// and verifies the whole definition pipeline (formatversion=2 parsing,
+// language-section filter, translations trim) returns a usable
+// definition. Run with tests/run.py; needs network. Be polite — this
+// is a smoke check against a public API, not something to loop.
+import { fetchDefinition } from '../js/services/dictionary.js';
+
+// One everyday word per edition, guaranteed to have an article with a
+// section about the edition's own language.
+const WORD_PER_EDITION = {
+  en: 'fish',
+  pl: 'kot',
+  ru: 'рыба',
+  es: 'casa',
+  de: 'Haus',
+  fr: 'eau',
+  pt: 'água',
+  it: 'acqua',
+  tr: 'su',
+  zh: '水',
+  ja: '水',
+};
+
+const out = [];
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+let failures = 0;
+for (const [lang, word] of Object.entries(WORD_PER_EDITION)) {
+  // Rate limiting is about this machine's traffic, not the pipeline —
+  // back off and retry before declaring a failure.
+  let result = { status: 'networkError' };
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) await sleep(5000 * attempt);
+    result = await fetchDefinition(word, lang);
+    if (result.status !== 'networkError') break;
+  }
+  const ok =
+    result.status === 'success' &&
+    result.entry.definition.trim() !== '' &&
+    result.entry.sourceUrl.includes(`${lang}.wiktionary.org`);
+  out.push(`${ok ? 'PASS' : 'FAIL'} ${lang} "${word}" -> ${result.status}`);
+  if (!ok) failures++;
+  await sleep(1000);
+}
+
+out.push(failures === 0 ? 'RESULT: ALL PASS' : `RESULT: ${failures} FAILURES`);
+document.getElementById('out').textContent = out.join('\n');
+document.title = 'done';
+</script>
+</body>
+</html>

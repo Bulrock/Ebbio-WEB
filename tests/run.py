@@ -41,7 +41,8 @@ async def main():
 
             await call("Page.enable")
             await call("Page.navigate", {"url": URL})
-            for _ in range(100):
+            # Live tests retry with backoff and can run for minutes.
+            for _ in range(600):
                 res = await call("Runtime.evaluate", {"expression": "document.title"})
                 if res.get("result", {}).get("value") == "done":
                     break
