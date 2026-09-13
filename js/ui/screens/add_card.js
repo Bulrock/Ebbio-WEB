@@ -20,11 +20,16 @@ register('addCard', (nav) => {
   // the card so the full article stays one tap away.
   let sourceUrl = '';
 
+  // autocapitalize/autocorrect off: iOS otherwise capitalizes the first
+  // letter of a lookup and second-guesses the spelling, and the word is
+  // searched — and stored — exactly as typed.
   const wordInput = h('input', {
     class: 'field-input',
     type: 'text',
-    autofocus: true,
     autocomplete: 'off',
+    autocapitalize: 'none',
+    autocorrect: 'off',
+    spellcheck: 'false',
   });
   const defInput = h('textarea', { class: 'field-input def-input' });
   const transInput = h('input', { class: 'field-input', type: 'text', autocomplete: 'off' });
@@ -163,6 +168,9 @@ register('addCard', (nav) => {
     { class: 'screen' },
     scaffold({ nav, title: t('newWord'), body, bottom: saveBtn }),
   );
-  requestAnimationFrame(() => wordInput.focus());
+  // Focus only once the slide-in is over: raising the iOS keyboard mid
+  // transition shifts the viewport under a transforming element, which
+  // kills the animation and leaves the screen frozen halfway across.
+  el.addEventListener('screen-entered', () => wordInput.focus(), { once: true });
   return el;
 });

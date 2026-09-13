@@ -2,6 +2,7 @@
 // tiles and the app-bar scaffold. Styling lives in css/styles.css.
 import { h } from './dom.js';
 import { icon } from './icons.js';
+import { afterTransition, commitStyles } from './anim.js';
 
 export function iconButton(name, onClick, { title = '', cls = '' } = {}) {
   return h(
@@ -86,8 +87,11 @@ export function selectMenu({ value, options, onChange, variant = 'field', placeh
 
   function open() {
     const close = (picked) => {
+      // Release the tap-blocking layer up front; an interrupted fade-out
+      // must never leave an invisible sheet over the app (see dialog()).
+      scrim.style.pointerEvents = 'none';
       scrim.classList.remove('open');
-      scrim.addEventListener('transitionend', () => scrim.remove(), { once: true });
+      afterTransition(scrim, 200, () => scrim.remove());
       window.removeEventListener('keydown', onKey);
       if (picked !== undefined) {
         current = picked;
@@ -116,11 +120,10 @@ export function selectMenu({ value, options, onChange, variant = 'field', placeh
     };
     document.body.appendChild(scrim);
     window.addEventListener('keydown', onKey);
-    requestAnimationFrame(() => {
-      scrim.classList.add('open');
-      const active = list.querySelector('.menu-option-active');
-      if (active) active.scrollIntoView({ block: 'center' });
-    });
+    commitStyles(scrim);
+    scrim.classList.add('open');
+    const active = list.querySelector('.menu-option-active');
+    if (active) active.scrollIntoView({ block: 'center' });
   }
 
   return trigger;

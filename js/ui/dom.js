@@ -1,6 +1,7 @@
 // Tiny DOM helpers — a hyperscript `h`, screen scaffolding, and the
 // overlay primitives (dialogs, snackbars) shared by every screen.
 import { Store } from '../store.js';
+import { afterTransition, commitStyles } from './anim.js';
 
 /// h('div', {class:'x', onClick:fn}, child, [children], 'text')
 export function h(tag, props, ...children) {
@@ -65,8 +66,13 @@ export function createScreen(nav, props, { build, reactive = false, tickMs = 0 }
 export function dialog({ title, content, actions, dismissible = true }) {
   return new Promise((resolve) => {
     const close = (value) => {
+      // Stop intercepting taps the moment we start closing. The scrim is a
+      // full-screen layer: if its fade-out is interrupted and the element
+      // lingers, an invisible sheet would sit over the whole app and every
+      // tap would land on nothing — the app would look dead.
+      scrim.style.pointerEvents = 'none';
       scrim.classList.remove('open');
-      scrim.addEventListener('transitionend', () => scrim.remove(), { once: true });
+      afterTransition(scrim, 200, () => scrim.remove());
       resolve(value);
     };
     const btns = (actions || []).map((a) =>
@@ -95,7 +101,8 @@ export function dialog({ title, content, actions, dismissible = true }) {
       card,
     );
     document.body.appendChild(scrim);
-    requestAnimationFrame(() => scrim.classList.add('open'));
+    commitStyles(scrim);
+    scrim.classList.add('open');
     if (dismissible) {
       const onKey = (e) => {
         if (e.key === 'Escape') {

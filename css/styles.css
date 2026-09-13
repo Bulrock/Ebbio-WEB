@@ -72,6 +72,11 @@ button {
   inset: 0;
   background: var(--grad);
   transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+/* will-change promotes the screen to its own compositing layer. Only worth
+   it while the screen is actually sliding — left on permanently it pins a
+   full-screen layer per stacked screen, which iOS pays for in memory. */
+.screen-animating {
   will-change: transform;
 }
 .screen-enter {

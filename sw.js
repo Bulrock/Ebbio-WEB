@@ -2,7 +2,7 @@
 // assets cache-first. External API calls (Wiktionary, MyMemory) always go
 // to the network and are never cached. Also focuses the app on a
 // notification tap.
-const CACHE = 'ebbio-v6';
+const CACHE = 'ebbio-v7';
 
 const SHELL = [
   './',
@@ -29,6 +29,7 @@ const SHELL = [
   'js/ui/dom.js',
   'js/ui/icons.js',
   'js/ui/router.js',
+  'js/ui/anim.js',
   'js/ui/components.js',
   'js/ui/definition_view.js',
   'js/ui/screens/splash.js',

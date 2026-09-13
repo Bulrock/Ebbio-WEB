@@ -1,6 +1,7 @@
 import { h, dialog } from '../dom.js';
 import { scaffold, button } from '../components.js';
 import { register } from '../router.js';
+import { focusWhenSettled } from '../anim.js';
 import { Store } from '../../store.js';
 import { t } from '../../i18n.js';
 import { speak } from '../../services/tts.js';
@@ -123,7 +124,7 @@ register('spelling', (nav, props) => {
         body,
       }),
     );
-    if (state === 'pending') requestAnimationFrame(() => input.focus());
+    if (state === 'pending') focusWhenSettled(root, input);
   }
 
   start();
