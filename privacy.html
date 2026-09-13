@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#065F46">
+<title>Ebbio — Privacy Policy</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icon/favicon-32.png">
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0 auto; padding: 32px 20px 64px; max-width: 46rem;
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  h1 { font-size: 1.75rem; margin-bottom: .25em; }
+  h2 { font-size: 1.15rem; margin-top: 2em; }
+  .sub { opacity: .7; margin-top: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+  th, td { text-align: left; vertical-align: top; padding: .5em .75em; border: 1px solid rgba(128,128,128,.35); }
+  footer { margin-top: 3em; padding-top: 1em; border-top: 1px solid rgba(128,128,128,.35); opacity: .75; font-size: .9em; }
+  a { color: #059669; }
+  @media (prefers-color-scheme: dark) { a { color: #6EE7B7; } }
+</style>
+</head>
+<body>
+
+<h1>Ebbio — Privacy Policy</h1>
+<p class="sub">Last updated: 13 September 2026</p>
+
+<p>Ebbio is a vocabulary app that schedules reviews using the Ebbinghaus
+forgetting curve. This policy covers the Ebbio mobile apps for Android
+and iOS as well as the web version at
+<a href="https://bulrock.github.io/Ebbio-WEB/">bulrock.github.io/Ebbio-WEB</a>.
+The short version: Ebbio has no accounts, no servers of its own, no
+analytics and no advertising, and everything you create stays on your
+device.</p>
+
+<h2>Data Ebbio collects</h2>
+<p><strong>None.</strong> The developer of Ebbio operates no server and
+receives no data from the app. There is no sign-up, no user account, no
+analytics SDK, no advertising SDK and no crash-reporting SDK.</p>
+
+<h2>Data stored on your device</h2>
+<p>Everything you create is stored locally — in the app's private
+storage on mobile, and in your browser's IndexedDB storage on the web:</p>
+<ul>
+  <li>your word cards — the word, its definition, your translation hint,
+      and its review schedule;</li>
+  <li>your settings — course languages, interval steps, mistake handling,
+      interface language.</li>
+</ul>
+<p>This data never leaves your device unless you explicitly export it (see
+<em>Backups</em>) or unless it is included in a device backup you have
+enabled in your system settings. Uninstalling the app — or clearing the
+site data in your browser — deletes it.</p>
+
+<h2>Data sent to third parties</h2>
+<p>Ebbio contacts external services only while you are creating or editing
+a card, and only with the single word or phrase you typed. Training,
+reviewing and browsing your dictionary work fully offline.</p>
+
+<table>
+  <tr><th>Service</th><th>What is sent</th><th>Why</th></tr>
+  <tr>
+    <td>Wiktionary (Wikimedia Foundation)</td>
+    <td>The word or phrase you typed, and the language of your course.</td>
+    <td>To fetch a dictionary definition.</td>
+  </tr>
+  <tr>
+    <td>MyMemory (Translated S.r.l.)</td>
+    <td>The word or phrase you typed, and your language pair.</td>
+    <td>To suggest a translation hint.</td>
+  </tr>
+</table>
+
+<p>These requests contain no identifier, no account and no device
+information beyond what any HTTP request necessarily reveals to the
+receiving server (such as your IP address and the app's user-agent
+string). Each service handles that request under its own privacy policy:
+the <a href="https://foundation.wikimedia.org/wiki/Policy:Privacy_policy">Wikimedia
+Foundation Privacy Policy</a> and the
+<a href="https://mymemory.translated.net/doc/privacy.php">MyMemory Privacy
+Policy</a>. If a lookup fails, the fields are simply left empty for you to
+fill in by hand — you can also skip autofill entirely and use Ebbio
+without any network access.</p>
+
+<h2>Text-to-speech</h2>
+<p>Pronunciation is played through the speech engine built into your
+device or browser. Depending on which engine you have configured, your
+operating system or browser may process the word through that engine's
+own service. Ebbio passes the word to it and receives audio back; it makes
+no connection of its own.</p>
+
+<h2>Notifications</h2>
+<p>Review reminders are scheduled on the device itself — by the operating
+system on mobile, and by the page's service worker on the web. No push
+server is involved, and nothing about your cards is sent anywhere in order
+to deliver them. You can decline or revoke the notification permission at
+any time; Ebbio remains fully usable without it.</p>
+
+<h2>Backups</h2>
+<p>Ebbio can export your cards and settings to a JSON file. Where that file
+goes — a chat, a cloud drive, your downloads folder — is entirely your
+choice, and the developer receives no copy. Importing works the same way in
+reverse, from a file you pick yourself.</p>
+
+<h2>Hosting of the web version</h2>
+<p>The web version is served as static files by GitHub Pages. Like any web
+host, GitHub receives the requests your browser makes for those files; see
+the <a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement">GitHub
+Privacy Statement</a>. Ebbio itself sends nothing to GitHub, sets no
+cookies and runs no tracking script.</p>
+
+<h2>Children</h2>
+<p>Ebbio is a general-audience learning app. It collects no personal
+information from anyone, including children.</p>
+
+<h2>Your rights</h2>
+<p>Because no data ever reaches the developer, there is nothing for us to
+export, correct or delete on your behalf. You are in full control: delete
+individual cards inside the app, uninstall it, or clear the site data in
+your browser to remove everything.</p>
+
+<h2>Changes to this policy</h2>
+<p>If this policy changes, the updated version will be published on this
+page with a new "last updated" date.</p>
+
+<h2>Contact</h2>
+<p>Questions about this policy: <a href="mailto:ebbio.app@gmail.com">ebbio.app@gmail.com</a></p>
+
+<footer>Ebbio · Powered by the Ebbinghaus forgetting curve</footer>
+
+</body>
+</html>
