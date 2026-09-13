@@ -135,7 +135,7 @@ export const STRINGS = {
     "courseSettings": "Course settings — {course}",
     "humanMinutes": "{count} min",
     "afterAnswer": "{duration} after a “Remember” answer",
-    "developedBy": "Developed by Kseniya & Max Valazhynski",
+    "developedBy": "Developed by May4Ever",
   },
   "ru": {
     "appTitle": "Ebbio",
